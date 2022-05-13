@@ -60,8 +60,8 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	private OrthographicCamera camera;
 	private Viewport viewport;
-	private final float VIRTUAL_WIDTH = 720;
-	private final float VIRTUAL_HEIGHT = 1280;
+	private final float VIRTUAL_WIDTH = 1280;
+	private final float VIRTUAL_HEIGHT = 720;
 
 	@Override
 	public void create() {
@@ -78,12 +78,16 @@ public class MyGdxGame extends ApplicationAdapter {
 		detectarColisoes();
 	}
 
-	private void inicializarTexturas(){
+	//Método para exibir as texturas do jogo
+	private void inicializarTexturas()
+	{
+		//Animação do passaro
 		passaros = new Texture[3];
 		passaros[0] = new Texture("passaro1.png");
 		passaros[1] = new Texture("passaro2.png");
 		passaros[2] = new Texture("passaro3.png");
 
+		//Props
 		fundo = new Texture("fundo.png");
 		canoBaixo = new Texture("cano_baixo_maior.png");
 		canoTopo = new Texture("cano_topo_maior.png");
