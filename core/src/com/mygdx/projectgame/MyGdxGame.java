@@ -14,7 +14,6 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -27,6 +26,9 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Texture canoBaixo;
 	private Texture canoTopo;
 	private Texture gameOver;
+	private Texture logoBird;
+	private Texture silverCoin;
+	private Texture goldCoin;
 
 	private ShapeRenderer shapeRenderer;
 	private Circle circuloPassaro;
@@ -60,8 +62,8 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	private OrthographicCamera camera;
 	private Viewport viewport;
-	private final float VIRTUAL_WIDTH = 1280;
-	private final float VIRTUAL_HEIGHT = 720;
+	private final float VIRTUAL_WIDTH = 720;
+	private final float VIRTUAL_HEIGHT = 1280;
 
 	@Override
 	public void create() {
@@ -92,6 +94,9 @@ public class MyGdxGame extends ApplicationAdapter {
 		canoBaixo = new Texture("cano_baixo_maior.png");
 		canoTopo = new Texture("cano_topo_maior.png");
 		gameOver = new Texture("game_over.png");
+		logoBird = new Texture("AngryFlappy.png");
+		silverCoin = new Texture("silverCoin.png");
+		goldCoin = new Texture("goldCoin.png");
 	}
 
 	private void inicializaObjetos(){
@@ -156,6 +161,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			if (posicaoInicialVerticalPassaro > 0 || toqueTela)
 				posicaoInicialVerticalPassaro = posicaoInicialVerticalPassaro - gravidade;
 			gravidade++;
+
 		} else if (estadoJogo == 2) {
 			if (pontos > pontuacaoMaxima) {
 				pontuacaoMaxima = pontos;
@@ -217,6 +223,14 @@ public class MyGdxGame extends ApplicationAdapter {
 			textoPontuacao.draw(batch, String.valueOf(pontos),
 					larguraDispositivo / 2, alturaDispositivo - 110);
 
+			if (estadoJogo == 0){
+				batch.draw(logoBird, larguraDispositivo / 2 - gameOver.getWidth() / 2,
+						(alturaDispositivo / 2) + 200);
+				batch.draw(silverCoin, larguraDispositivo / 2 - gameOver.getWidth() / 2,
+						(alturaDispositivo / 2) + 100);
+				batch.draw(goldCoin, larguraDispositivo / 2 - gameOver.getWidth() / 2,
+						(alturaDispositivo / 2) + 300);
+			}
 			if (estadoJogo == 2) {
 				batch.draw(gameOver, larguraDispositivo / 2 - gameOver.getWidth() / 2,
 						alturaDispositivo / 2);
@@ -230,7 +244,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	private void validarPontos(){
 
-		if(posicaoCanoHorizontal < 50-passaros[0].getWidth()){
+		if(posicaoCanoHorizontal < 200-passaros[0].getWidth()){
 			if(!passouCano){
 				pontos++;
 				passouCano = true;
