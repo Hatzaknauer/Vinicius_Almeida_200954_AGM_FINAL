@@ -32,6 +32,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	private ShapeRenderer shapeRenderer;
 	private Circle circuloPassaro;
+	private Circle circuloMoeda;
 	private Rectangle retanguloCanoCima;
 	private Rectangle retanguloCanoBaixo;
 
@@ -42,11 +43,14 @@ public class MyGdxGame extends ApplicationAdapter {
 	private float posicaoInicialVerticalPassaro = 0;
 	private float posicaoCanoHorizontal;
 	private float posicaoCanoVertical;
+	private float posicaoMoedaHorizontal;
+	private float posicaoMoedaVertical;
 	private float espacoEntreCanos;
 	private Random random;
 	private int pontos = 0;
 	private int pontuacaoMaxima = 0;
 	private boolean passouCano = false;
+	private boolean pegouMoeda = false;
 	private int estadoJogo = 0;
 	private float posicaoHorizontalPassaro = 0;
 
@@ -99,14 +103,18 @@ public class MyGdxGame extends ApplicationAdapter {
 		goldCoin = new Texture("goldCoin.png");
 	}
 
-	private void inicializaObjetos(){
+	private void inicializaObjetos()
+	{
 		batch = new SpriteBatch();
 		random = new Random();
+		pegouMoeda = false;
 
 		larguraDispositivo = VIRTUAL_WIDTH;
 		alturaDispositivo = VIRTUAL_HEIGHT;
 		posicaoInicialVerticalPassaro = alturaDispositivo / 2;
 		posicaoCanoHorizontal = larguraDispositivo;
+		posicaoMoedaHorizontal = larguraDispositivo + larguraDispositivo/2;
+		posicaoMoedaVertical = random.nextInt((int)alturaDispositivo);
 		espacoEntreCanos = 350;
 
 		textoPontuacao = new BitmapFont();
@@ -123,6 +131,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		shapeRenderer = new ShapeRenderer();
 		circuloPassaro = new Circle();
+		circuloMoeda = new Circle();
 		retanguloCanoBaixo = new Rectangle();
 		retanguloCanoCima = new Rectangle();
 
@@ -139,61 +148,112 @@ public class MyGdxGame extends ApplicationAdapter {
 		viewport = new StretchViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
 	}
 
-	private void verificarEstadoJogo() {
+	private void verificarEstadoJogo()
+	{
 		boolean toqueTela = Gdx.input.justTouched();
-		if (estadoJogo == 0) {
-			if (toqueTela) {
+		//Estado inicial do jogo
+		if (estadoJogo == 0)
+		{
+			if (toqueTela)
+			{
 				gravidade = -15;
 				estadoJogo = 1;
 				somVoando.play();
 			}
-		} else if (estadoJogo == 1) {
-			if (toqueTela) {
+
+			//Estado do jogo rodando
+		} else if (estadoJogo == 1)
+		{
+			if (toqueTela)
+			{
 				gravidade = -15;
 				somVoando.play();
 			}
+			//Define posicao inicial do cano e faz com que ele se mova
 			posicaoCanoHorizontal -= Gdx.graphics.getDeltaTime() * 200;
-			if (posicaoCanoHorizontal < -canoTopo.getWidth()) {
+
+			//Volta o cano pro lugar quando sai da tela
+			if (posicaoCanoHorizontal < -canoTopo.getWidth())
+			{
 				posicaoCanoHorizontal = larguraDispositivo;
 				posicaoCanoVertical = random.nextInt(400) - 200;
 				passouCano = false;
 			}
+
+			//Tentativa de setar onde vai desenhar a moeda
+			posicaoMoedaHorizontal -= Gdx.graphics.getDeltaTime() * 200;
+
+			if (posicaoMoedaHorizontal < -silverCoin.getWidth() || pegouMoeda)
+			{
+				if (pegouMoeda)
+				{
+					posicaoMoedaHorizontal = posicaoMoedaHorizontal+larguraDispositivo;
+				}else
+				{
+					posicaoMoedaHorizontal = larguraDispositivo;
+				}
+				posicaoMoedaVertical = random.nextInt((int)alturaDispositivo);
+			}
+
+			//Adiciona gravidade no pássaro quando recebe toque na tela
 			if (posicaoInicialVerticalPassaro > 0 || toqueTela)
 				posicaoInicialVerticalPassaro = posicaoInicialVerticalPassaro - gravidade;
 			gravidade++;
 
-		} else if (estadoJogo == 2) {
-			if (pontos > pontuacaoMaxima) {
+		}
+
+		//Estado do jogo quando o player morre
+		else if (estadoJogo == 2)
+		{
+			//Caso a pontuação do jogador quando morreu seja maior do que a pontuação máxima anterior
+			if (pontos > pontuacaoMaxima)
+			{
+				//Define nova pontuação máxima
 				pontuacaoMaxima = pontos;
 				preferencias.putInteger("pontuacaoMaxima", pontuacaoMaxima);
 				preferencias.flush();
 			}
+			//Joga o pássaro pra fora
 			posicaoHorizontalPassaro -= Gdx.graphics.getDeltaTime() * 500;
 
-			if (toqueTela) {
+			if (toqueTela)
+			{
 				estadoJogo = 0;
 				pontos = 0;
 				gravidade = 0;
 				posicaoHorizontalPassaro = 0;
 				posicaoInicialVerticalPassaro = alturaDispositivo / 2;
+				posicaoMoedaHorizontal = larguraDispositivo + larguraDispositivo/2;
 				posicaoCanoHorizontal = larguraDispositivo;
 			}
 		}
 	}
 
-	private void detectarColisoes() {
+	//Seta hitboxes
+	private void detectarColisoes()
+	{
+		//Hitbox do passaro
 		circuloPassaro.set(
 				50 + posicaoHorizontalPassaro + passaros[0].getWidth() / 2,
 				posicaoInicialVerticalPassaro + passaros[0].getHeight() / 2,
 				passaros[0].getWidth() / 2
 		);
 
+		//Hitbox da moeda
+		circuloMoeda.set(
+				posicaoMoedaHorizontal + goldCoin.getWidth()/2,
+				posicaoMoedaVertical + goldCoin.getHeight()/2,
+				goldCoin.getWidth()/2
+		);
+
+		//Hitbox do cano de baixo
 		retanguloCanoBaixo.set(
 				posicaoCanoHorizontal,
 				alturaDispositivo / 2 - canoBaixo.getHeight() - espacoEntreCanos / 2 + posicaoCanoVertical,
 				canoBaixo.getWidth(), canoBaixo.getHeight()
 		);
 
+		//Hitbox do cano de cima
 		retanguloCanoCima.set(
 				posicaoCanoHorizontal, alturaDispositivo / 2 + espacoEntreCanos / 2 + posicaoCanoVertical,
 				canoTopo.getWidth(), canoTopo.getHeight()
@@ -201,6 +261,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		boolean colidiuCanoCima = Intersector.overlaps(circuloPassaro, retanguloCanoCima);
 		boolean colidiuCanoBaixo = Intersector.overlaps(circuloPassaro, retanguloCanoBaixo);
+		pegouMoeda = Intersector.overlaps(circuloPassaro, circuloMoeda);
 
 		if (colidiuCanoCima || colidiuCanoBaixo) {
 			if (estadoJogo == 1) {
@@ -210,60 +271,78 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 	}
 
-		private void desenharTexturas() {
-			batch.setProjectionMatrix(camera.combined);
-			batch.begin();
-			batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo);
-			batch.draw(passaros[(int) variacao],
-					50 + posicaoHorizontalPassaro, posicaoInicialVerticalPassaro);
-			batch.draw(canoBaixo, posicaoCanoHorizontal,
-					alturaDispositivo / 2 - canoBaixo.getHeight() - espacoEntreCanos / 2 + posicaoCanoVertical);
-			batch.draw(canoTopo, posicaoCanoHorizontal,
-					alturaDispositivo / 2 + espacoEntreCanos / 2 + posicaoCanoVertical);
-			textoPontuacao.draw(batch, String.valueOf(pontos),
-					larguraDispositivo / 2, alturaDispositivo - 110);
+	private void desenharTexturas()
+	{
+		batch.setProjectionMatrix(camera.combined);
+		batch.begin();
+		batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo);
+		batch.draw(passaros[(int) variacao],
+				50 + posicaoHorizontalPassaro, posicaoInicialVerticalPassaro);
+		//Desenha partes do baixo do cano
+		batch.draw(canoBaixo, posicaoCanoHorizontal,
+				alturaDispositivo / 2 - canoBaixo.getHeight() - espacoEntreCanos / 2 + posicaoCanoVertical);
+		batch.draw(canoTopo, posicaoCanoHorizontal,
+				alturaDispositivo / 2 + espacoEntreCanos / 2 + posicaoCanoVertical);
+		//Desenha moeda
+		batch.draw(silverCoin, posicaoMoedaHorizontal, posicaoMoedaVertical);
+		textoPontuacao.draw(batch, String.valueOf(pontos),
+				larguraDispositivo / 2, alturaDispositivo - 110);
 
-			if (estadoJogo == 0){
-				batch.draw(logoBird, larguraDispositivo / 2 - gameOver.getWidth() / 2,
-						(alturaDispositivo / 2) + 200);
-				batch.draw(silverCoin, larguraDispositivo / 2 - gameOver.getWidth() / 2,
-						(alturaDispositivo / 2) + 100);
-				batch.draw(goldCoin, larguraDispositivo / 2 - gameOver.getWidth() / 2,
-						(alturaDispositivo / 2) + 300);
-			}
-			if (estadoJogo == 2) {
-				batch.draw(gameOver, larguraDispositivo / 2 - gameOver.getWidth() / 2,
-						alturaDispositivo / 2);
-				textoReiniciar.draw(batch, "Toque para reiniciar!", larguraDispositivo / 2 - 140,
-						alturaDispositivo / 2 - gameOver.getHeight() / 2);
-				textoMelhorPontuacao.draw(batch, "Seu record é: " + pontuacaoMaxima + "pontos",
-						larguraDispositivo / 2 - 140, alturaDispositivo / 2 - gameOver.getHeight());
-			}
-			batch.end();
+		//Quando o jogo está no "start"
+		if (estadoJogo == 0){
+			//Desenha logo do jogo
+			batch.draw(logoBird, larguraDispositivo / 2 - gameOver.getWidth() / 2,
+					(alturaDispositivo / 2) + 200);
 		}
+		//Quando o passarinho bate:
+		if (estadoJogo == 2) {
+			//Imagem de game over
+			batch.draw(gameOver, larguraDispositivo / 2 - gameOver.getWidth() / 2,
+					alturaDispositivo / 2);
+			//Texto pra reiniciar
+			textoReiniciar.draw(batch, "Toque para reiniciar!", larguraDispositivo / 2 - 140,
+					alturaDispositivo / 2 - gameOver.getHeight() / 2);
+			//Exibe maior pontuação
+			textoMelhorPontuacao.draw(batch, "Seu record é: " + pontuacaoMaxima + "pontos",
+					larguraDispositivo / 2 - 140, alturaDispositivo / 2 - gameOver.getHeight());
+		}
+		batch.end();
+	}
 
-	private void validarPontos(){
+	private void validarPontos()
+	{
 
-		if(posicaoCanoHorizontal < 200-passaros[0].getWidth()){
-			if(!passouCano){
+		if(posicaoCanoHorizontal < 200-passaros[0].getWidth())
+		{
+			if(!passouCano)
+			{
 				pontos++;
 				passouCano = true;
 				somPontuacao.play();
 			}
 		}
+		if(pegouMoeda)
+		{
+			pontos+=5;
+			pegouMoeda = false;
+			somPontuacao.play();
+		}
 		variacao += Gdx.graphics.getDeltaTime() * 10;
 
-		if(variacao>3) {
+		if(variacao>3)
+		{
 			variacao = 0;
 		}
-		}
+	}
 
-		@Override
-		public void resize(int width, int height) {
-			viewport.update(width, height);
-		}
+	@Override
+	public void resize(int width, int height)
+	{
+		viewport.update(width, height);
+	}
 
-		@Override
-		public void dispose(){
+	@Override
+	public void dispose()
+	{
 	}
 }
